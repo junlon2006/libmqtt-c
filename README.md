@@ -113,12 +113,6 @@ cmake ..
 make
 ```
 
-### Using Make
-
-```bash
-make
-```
-
 ## Quick Start
 
 ### 1. Implement OS Abstraction Layer
