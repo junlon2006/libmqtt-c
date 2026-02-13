@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
+#include <stdio.h>
 
 static mqtt_socket_t posix_connect(const char* host, uint16_t port, uint32_t timeout_ms) {
     int sock = socket(AF_INET, SOCK_STREAM, 0);
