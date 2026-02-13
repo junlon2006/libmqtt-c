@@ -141,17 +141,6 @@ int mqtt_client_subscribe(mqtt_client_t* client, const char* topic, uint8_t qos)
 int mqtt_client_publish(mqtt_client_t* client, const char* topic, const uint8_t* payload, size_t len, uint8_t qos);
 
 /**
- * @brief Maintain MQTT connection (must be called periodically)
- * @param client Client handle
- * @return 0 if connected, -1 if disconnected (will auto-reconnect)
- * @note This function handles:
- *       - Keep-alive ping messages
- *       - Automatic reconnection on network failure
- *       - Automatic resubscription after reconnection
- */
-int mqtt_client_loop(mqtt_client_t* client);
-
-/**
  * @brief Check if client is connected
  * @param client Client handle
  * @return 1 if connected, 0 if disconnected

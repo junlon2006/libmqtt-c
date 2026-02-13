@@ -83,7 +83,7 @@ typedef struct {
      *  @return Thread handle
      */
     mqtt_thread_t (*thread_create)(mqtt_thread_func_t func, void* arg, 
-                                    uint32_t stack_size, uint32_t priority);
+                                   uint32_t stack_size, uint32_t priority);
     
     /** @brief Destroy a thread */
     void (*thread_destroy)(mqtt_thread_t thread);

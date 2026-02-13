@@ -48,7 +48,20 @@ static int lwip_send(mqtt_socket_t sock, const uint8_t* buf, size_t len, uint32_
 }
 
 static int lwip_recv(mqtt_socket_t sock, uint8_t* buf, size_t len, uint32_t timeout_ms) {
-    return recv((int)(intptr_t)sock, buf, len, 0);
+    int fd = (int)(intptr_t)sock;
+    fd_set readfds;
+    struct timeval tv;
+    
+    FD_ZERO(&readfds);
+    FD_SET(fd, &readfds);
+    
+    tv.tv_sec = timeout_ms / 1000;
+    tv.tv_usec = (timeout_ms % 1000) * 1000;
+    
+    int ret = select(fd + 1, &readfds, NULL, NULL, &tv);
+    if (ret <= 0) return ret;
+    
+    return recv(fd, buf, len, 0);
 }
 
 static const mqtt_net_api_t lwip_net_api = {

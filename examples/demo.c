@@ -15,7 +15,7 @@
 #include <signal.h>
 
 /* MQTT Broker Configuration */
-#define MQTT_BROKER_HOST        "test.mosquitto.org"
+#define MQTT_BROKER_HOST        "10.91.0.69"
 #define MQTT_BROKER_PORT        1883
 #define MQTT_CLIENT_ID          "libmqtt_test_client"
 #define MQTT_USERNAME           NULL
@@ -111,9 +111,6 @@ int main(void) {
     printf("\nRunning... (Press Ctrl+C to exit)\n");
     int count = 0;
     while (running) {
-        mqtt_client_loop(client);
-        mqtt_os_get()->sleep_ms(MQTT_LOOP_INTERVAL_MS);
-        
         if (++count % MQTT_HEARTBEAT_INTERVAL == 0 && mqtt_client_is_connected(client)) {
             char buf[128];
             snprintf(buf, sizeof(buf), "Heartbeat #%d from libmqtt client", count / MQTT_HEARTBEAT_INTERVAL);
@@ -121,6 +118,8 @@ int main(void) {
                 printf("[SEND] Published heartbeat: %s\n", buf);
             }
         }
+    
+        mqtt_os_get()->sleep_ms(MQTT_LOOP_INTERVAL_MS);
     }
     
     printf("\nDisconnecting...\n");
