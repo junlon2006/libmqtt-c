@@ -14,6 +14,69 @@ A minimal MQTT 3.1.1 client implementation designed for resource-constrained RTO
 
 ## Architecture
 
+### System Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      Application Layer                          │
+│                  (Your MQTT Application)                        │
+└────────────────────────┬────────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    MQTT Client API                              │
+│  mqtt_client_create() / connect() / subscribe() / publish()     │
+└────────────────────────┬────────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   MQTT Core Layer                               │
+│  ┌──────────────┐     ┌──────────────┐     ┌───────────────┐    │
+│  │ mqtt.c       │     │ Protocol     │     │ Auto-Reconnect│    │
+│  │ Client Logic │     │ Encode/Decode│     │ & Recovery    │    │
+│  └──────────────┘     └──────────────┘     └───────────────┘    │
+└────────────────────────┬────────────────────────────────────────┘
+                         │
+                         ▼
+        ┌────────────────┼────────────────┐
+        │                │                │
+        ▼                ▼                ▼
+┌───────────────┐ ┌───────────────┐ ┌───────────────┐
+│OS Abstraction │ │Net Abstraction│ │TLS Abstraction│
+│  mqtt_os.c    │ │ mqtt_net.c    │ │ mqtt_tls.c    │
+└───────┬───────┘ └───────┬───────┘ └───────┬───────┘
+        │                 │                 │
+        ▼                 ▼                 ▼
+┌───────────────┐ ┌───────────────┐ ┌───────────────┐
+│ OS Port Layer │ │ Network Port  │ │  TLS Port     │
+│┌─────────────┐│ │┌─────────────┐│ │┌─────────────┐│
+││  FreeRTOS   ││ ││    lwIP     ││ ││   mbedTLS   ││
+││  RT-Thread  ││ ││ BSD Socket  ││ ││   OpenSSL   ││
+││  ThreadX    ││ ││   Custom    ││ ││   WolfSSL   ││
+││  Zephyr     ││ │└─────────────┘│ │└─────────────┘│
+││  ... (13+)  ││ │               │ │               │
+│└─────────────┘│ └───────────────┘ └───────────────┘
+└───────┬───────┘         │                 │
+        │                 │                 │
+        └────────┬────────┴────────┬────────┘
+                 │                 │
+                 ▼                 ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    Hardware / RTOS Kernel                       │
+│              (ARM Cortex-M, RISC-V, x86, etc.)                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Key Design Principles
+
+- **Layered Architecture**: Clear separation between application, protocol, and platform layers
+- **Abstraction Layers**: OS, Network, and TLS operations are fully abstracted
+- **Portability**: Easy to port to any RTOS by implementing abstraction interfaces
+- **Minimal Dependencies**: Core library has zero external dependencies
+- **Resource Efficient**: Optimized for embedded systems with limited resources
+
+### Directory Structure
+
 ```
 include/           - Public API headers
   mqtt.h           - Main MQTT client API
