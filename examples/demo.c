@@ -15,7 +15,7 @@
 #include <signal.h>
 
 /* MQTT Broker Configuration */
-#define MQTT_BROKER_HOST        "10.91.0.69"
+#define MQTT_BROKER_HOST        "est.mosquitto.org"
 #define MQTT_BROKER_PORT        1883
 #define MQTT_CLIENT_ID          "libmqtt_test_client"
 #define MQTT_USERNAME           NULL
