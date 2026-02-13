@@ -1,1 +1,0 @@
-/usr/bin/cc -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/mqtt_demo.dir/examples/demo.c.o -o mqtt_demo  libmqtt.a libmqtt_posix.a -lpthread

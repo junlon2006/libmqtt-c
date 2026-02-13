@@ -16,8 +16,8 @@ add_library(mqtt STATIC
 
 # POSIX port library
 add_library(mqtt_posix STATIC
-    src/port/posix_os.c
-    src/port/posix_net.c
+    src/port/os/posix_os.c
+    src/port/net/posix_net.c
 )
 target_link_libraries(mqtt_posix pthread)
 

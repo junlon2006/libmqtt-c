@@ -168,7 +168,7 @@ int main(void) {
 
 ## Supported Platforms
 
-- **RTOS**: FreeRTOS, RT-Thread, ThreadX, Zephyr
+- **RTOS**: FreeRTOS, RT-Thread, ThreadX, Zephyr, AliOS Things, LiteOS, Mbed OS, CMSIS-RTOS2, NuttX, uC/OS-III, RIOT OS, TencentOS-tiny
 - **Network**: lwIP, BSD sockets, custom TCP/IP stacks
 - **Testing**: Linux, macOS, Unix (POSIX)
 

@@ -1,0 +1,22 @@
+# Build directories
+build/
+cmake-build-*/
+
+# Object files
+*.o
+*.a
+*.so
+*.dylib
+
+# Executables
+mqtt_demo
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store

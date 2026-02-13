@@ -1,2 +1,0 @@
-/usr/bin/ar qc libmqtt_posix.a CMakeFiles/mqtt_posix.dir/src/port/posix_os.c.o CMakeFiles/mqtt_posix.dir/src/port/posix_net.c.o
-/usr/bin/ranlib libmqtt_posix.a

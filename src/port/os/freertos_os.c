@@ -1,3 +1,8 @@
+/**
+ * @file freertos_os.c
+ * @brief FreeRTOS OS abstraction layer implementation
+ */
+
 #include "mqtt.h"
 #include "FreeRTOS.h"
 #include "task.h"
