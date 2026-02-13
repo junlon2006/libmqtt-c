@@ -14,6 +14,24 @@
 #include <string.h>
 #include <signal.h>
 
+/* MQTT Broker Configuration */
+#define MQTT_BROKER_HOST        "test.mosquitto.org"
+#define MQTT_BROKER_PORT        1883
+#define MQTT_CLIENT_ID          "libmqtt_test_client"
+#define MQTT_USERNAME           NULL
+#define MQTT_PASSWORD           NULL
+#define MQTT_KEEPALIVE          60
+#define MQTT_CLEAN_SESSION      1
+
+/* Topic Configuration */
+#define MQTT_SUB_TOPIC_1        "test/demo/sub1"
+#define MQTT_SUB_TOPIC_2        "test/demo/sub2"
+#define MQTT_PUB_TOPIC          "test/demo/pub"
+
+/* Application Configuration */
+#define MQTT_LOOP_INTERVAL_MS   1000
+#define MQTT_HEARTBEAT_INTERVAL 30
+
 void mqtt_posix_init(void);
 void mqtt_posix_net_init(void);
 
@@ -42,13 +60,13 @@ int main(void) {
     mqtt_client_t* client = NULL;
     
     mqtt_config_t config = {
-        .host = "10.91.0.69",
-        .port = 1883,
-        .client_id = "libmqtt_test_client",
-        .username = NULL,
-        .password = NULL,
-        .keepalive = 60,
-        .clean_session = 1,
+        .host = MQTT_BROKER_HOST,
+        .port = MQTT_BROKER_PORT,
+        .client_id = MQTT_CLIENT_ID,
+        .username = MQTT_USERNAME,
+        .password = MQTT_PASSWORD,
+        .keepalive = MQTT_KEEPALIVE,
+        .clean_session = MQTT_CLEAN_SESSION,
         .msg_cb = on_message,
         .user_data = NULL
     };
@@ -69,8 +87,8 @@ int main(void) {
     
     printf("Connected successfully!\n");
     
-    const char* sub_topic = "iot/v1/s2d/AC7A512C5AB200711AE9CA90A2DCDC17/reminder";
-    const char* pub_topic = "test/demo";
+    const char* sub_topic = MQTT_SUB_TOPIC_1;
+    const char* pub_topic = MQTT_PUB_TOPIC;
     
     printf("Subscribing to topic: %s...\n", sub_topic);
     if (mqtt_client_subscribe(client, sub_topic, 0) == 0) {
@@ -79,8 +97,8 @@ int main(void) {
         printf("Subscribe failed\n");
     }
     
-    printf("Subscribing to topic: %s...\n", pub_topic);
-    if (mqtt_client_subscribe(client, pub_topic, 0) == 0) {
+    printf("Subscribing to topic: %s...\n", MQTT_SUB_TOPIC_2);
+    if (mqtt_client_subscribe(client, MQTT_SUB_TOPIC_2, 0) == 0) {
         printf("Subscribed successfully\n");
     }
     
@@ -94,12 +112,12 @@ int main(void) {
     int count = 0;
     while (running) {
         mqtt_client_loop(client);
-        mqtt_os_get()->sleep_ms(1000);
+        mqtt_os_get()->sleep_ms(MQTT_LOOP_INTERVAL_MS);
         
-        if (++count % 30 == 0 && mqtt_client_is_connected(client)) {
+        if (++count % MQTT_HEARTBEAT_INTERVAL == 0 && mqtt_client_is_connected(client)) {
             char buf[128];
-            snprintf(buf, sizeof(buf), "Heartbeat #%d from libmqtt client", count / 30);
-            if (mqtt_client_publish(client, "test/demo", (uint8_t*)buf, strlen(buf), 0) == 0) {
+            snprintf(buf, sizeof(buf), "Heartbeat #%d from libmqtt client", count / MQTT_HEARTBEAT_INTERVAL);
+            if (mqtt_client_publish(client, MQTT_PUB_TOPIC, (uint8_t*)buf, strlen(buf), 0) == 0) {
                 printf("[SEND] Published heartbeat: %s\n", buf);
             }
         }
