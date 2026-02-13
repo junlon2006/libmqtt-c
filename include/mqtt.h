@@ -19,6 +19,10 @@
 #include "mqtt_os.h"
 #include "mqtt_net.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** @brief Maximum MQTT packet size */
 #define MQTT_MAX_PACKET_SIZE  1024
 
@@ -152,5 +156,9 @@ int mqtt_client_loop(mqtt_client_t* client);
  * @return 1 if connected, 0 if disconnected
  */
 int mqtt_client_is_connected(mqtt_client_t* client);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MQTT_H */

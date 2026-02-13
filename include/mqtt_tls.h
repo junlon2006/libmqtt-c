@@ -12,6 +12,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** @brief Opaque TLS context handle */
 typedef void* mqtt_tls_context_t;
 
@@ -87,5 +91,9 @@ void mqtt_tls_init(const mqtt_tls_api_t* api);
  * @return Pointer to registered TLS API structure
  */
 const mqtt_tls_api_t* mqtt_tls_get(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MQTT_TLS_H */

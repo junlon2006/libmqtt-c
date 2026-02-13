@@ -12,6 +12,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** @brief Opaque mutex handle */
 typedef void* mqtt_mutex_t;
 
@@ -106,5 +110,9 @@ void mqtt_os_init(const mqtt_os_api_t* api);
  * @return Pointer to registered OS API structure
  */
 const mqtt_os_api_t* mqtt_os_get(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MQTT_OS_H */

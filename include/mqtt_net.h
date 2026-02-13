@@ -12,6 +12,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** @brief Opaque socket handle */
 typedef void* mqtt_socket_t;
 
@@ -65,5 +69,9 @@ void mqtt_net_init(const mqtt_net_api_t* api);
  * @return Pointer to registered network API structure
  */
 const mqtt_net_api_t* mqtt_net_get(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MQTT_NET_H */
