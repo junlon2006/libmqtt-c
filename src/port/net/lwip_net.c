@@ -15,23 +15,30 @@ static mqtt_socket_t lwip_connect(const char* host, uint16_t port, uint32_t time
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) return NULL;
     
-    struct hostent* server = gethostbyname(host);
-    if (!server) {
+    struct addrinfo hints, *result, *rp;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    
+    char port_str[6];
+    snprintf(port_str, sizeof(port_str), "%u", port);
+    
+    if (lwip_getaddrinfo(host, port_str, &hints, &result) != 0) {
         close(sock);
         return NULL;
     }
     
-    struct sockaddr_in addr;
-    memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-    memcpy(&addr.sin_addr.s_addr, server->h_addr, server->h_length);
+    int connected = -1;
+    for (rp = result; rp != NULL; rp = rp->ai_next) {
+        if (connect(sock, rp->ai_addr, rp->ai_addrlen) == 0) {
+            connected = 0;
+            break;
+        }
+    }
     
-    struct timeval tv = {timeout_ms / 1000, (timeout_ms % 1000) * 1000};
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-    setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+    lwip_freeaddrinfo(result);
     
-    if (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+    if (connected != 0) {
         close(sock);
         return NULL;
     }
@@ -44,24 +51,37 @@ static void lwip_disconnect(mqtt_socket_t sock) {
 }
 
 static int lwip_send(mqtt_socket_t sock, const uint8_t* buf, size_t len, uint32_t timeout_ms) {
-    return send((int)(intptr_t)sock, buf, len, 0);
+    int fd = (int)(intptr_t)sock;
+    ssize_t ret;
+    do {
+        ret = send(fd, buf, len, 0);
+    } while (ret < 0 && errno == EINTR);
+    return ret;
 }
 
 static int lwip_recv(mqtt_socket_t sock, uint8_t* buf, size_t len, uint32_t timeout_ms) {
     int fd = (int)(intptr_t)sock;
     fd_set readfds;
     struct timeval tv;
+    int ret;
     
-    FD_ZERO(&readfds);
-    FD_SET(fd, &readfds);
+    do {
+        FD_ZERO(&readfds);
+        FD_SET(fd, &readfds);
+        
+        tv.tv_sec = timeout_ms / 1000;
+        tv.tv_usec = (timeout_ms % 1000) * 1000;
+        
+        ret = select(fd + 1, &readfds, NULL, NULL, &tv);
+    } while (ret < 0 && errno == EINTR);
     
-    tv.tv_sec = timeout_ms / 1000;
-    tv.tv_usec = (timeout_ms % 1000) * 1000;
-    
-    int ret = select(fd + 1, &readfds, NULL, NULL, &tv);
     if (ret <= 0) return ret;
     
-    return recv(fd, buf, len, 0);
+    do {
+        ret = recv(fd, buf, len, 0);
+    } while (ret < 0 && errno == EINTR);
+    
+    return ret;
 }
 
 static const mqtt_net_api_t lwip_net_api = {
