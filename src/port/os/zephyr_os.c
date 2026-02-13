@@ -67,7 +67,8 @@ static mqtt_thread_t zephyr_thread_create(mqtt_thread_func_t func, void* arg,
 }
 
 static void zephyr_thread_destroy(mqtt_thread_t thread) {
-    k_thread_abort((k_tid_t)thread);
+    /* Zephyr k_thread_abort already aborts, no-op */
+    (void)thread;
 }
 
 static void zephyr_thread_exit(void) {

@@ -68,7 +68,7 @@ static mqtt_thread_t posix_thread_create(mqtt_thread_func_t func, void* arg,
 }
 
 static void posix_thread_destroy(mqtt_thread_t thread) {
-    pthread_cancel(*(pthread_t*)thread);
+    /* POSIX pthread_exit already exited, just join and free */
     pthread_join(*(pthread_t*)thread, NULL);
     free(thread);
 }

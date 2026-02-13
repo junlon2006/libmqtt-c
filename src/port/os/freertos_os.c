@@ -60,7 +60,8 @@ static mqtt_thread_t freertos_thread_create(mqtt_thread_func_t func, void* arg,
 }
 
 static void freertos_thread_destroy(mqtt_thread_t thread) {
-    vTaskDelete((TaskHandle_t)thread);
+    /* FreeRTOS: thread_exit (vTaskDelete(NULL)) already deleted itself, no-op */
+    (void)thread;
 }
 
 static void freertos_thread_exit(void) {

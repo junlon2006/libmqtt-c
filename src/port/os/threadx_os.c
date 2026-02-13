@@ -68,13 +68,14 @@ static mqtt_thread_t threadx_thread_create(mqtt_thread_func_t func, void* arg,
 }
 
 static void threadx_thread_destroy(mqtt_thread_t thread) {
-    tx_thread_terminate((TX_THREAD*)thread);
-    tx_thread_delete((TX_THREAD*)thread);
-    free(thread);
+    /* ThreadX: thread_exit already deleted, no-op */
+    (void)thread;
 }
 
 static void threadx_thread_exit(void) {
-    tx_thread_terminate(tx_thread_identify());
+    TX_THREAD* self = tx_thread_identify();
+    tx_thread_terminate(self);
+    tx_thread_delete(self);
 }
 
 static uint32_t threadx_get_time_ms(void) {

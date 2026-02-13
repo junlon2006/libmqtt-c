@@ -80,8 +80,8 @@ static mqtt_thread_t ucos3_thread_create(mqtt_thread_func_t func, void* arg,
 }
 
 static void ucos3_thread_destroy(mqtt_thread_t thread) {
-    OS_ERR err;
-    OSTaskDel((OS_TCB*)thread, &err);
+    /* uC/OS-III thread_exit already deleted, no-op */
+    (void)thread;
 }
 
 static void ucos3_thread_exit(void) {

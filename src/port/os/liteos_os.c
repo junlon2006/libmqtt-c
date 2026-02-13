@@ -76,7 +76,7 @@ static mqtt_thread_t liteos_thread_create(mqtt_thread_func_t func, void* arg,
 }
 
 static void liteos_thread_destroy(mqtt_thread_t thread) {
-    LOS_TaskDelete(*(UINT32*)thread);
+    /* LiteOS thread_exit already deleted, just free handle */
     free(thread);
 }
 

@@ -64,7 +64,7 @@ static mqtt_thread_t alios_thread_create(mqtt_thread_func_t func, void* arg,
 }
 
 static void alios_thread_destroy(mqtt_thread_t thread) {
-    aos_task_delete((aos_task_t*)thread);
+    /* In AliOS, thread_exit already exited, just free the handle */
     free(thread);
 }
 

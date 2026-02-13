@@ -62,7 +62,8 @@ static mqtt_thread_t rtthread_thread_create(mqtt_thread_func_t func, void* arg,
 }
 
 static void rtthread_thread_destroy(mqtt_thread_t thread) {
-    rt_thread_delete((rt_thread_t)thread);
+    /* In RT-Thread, thread_exit already deleted itself, make this a no-op */
+    (void)thread;
 }
 
 static void rtthread_thread_exit(void) {

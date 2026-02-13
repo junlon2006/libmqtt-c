@@ -63,7 +63,8 @@ static mqtt_thread_t cmsis_thread_create(mqtt_thread_func_t func, void* arg,
 }
 
 static void cmsis_thread_destroy(mqtt_thread_t thread) {
-    osThreadTerminate((osThreadId_t)thread);
+    /* CMSIS osThreadExit already exited, no-op */
+    (void)thread;
 }
 
 static void cmsis_thread_exit(void) {

@@ -72,7 +72,7 @@ static mqtt_thread_t nuttx_thread_create(mqtt_thread_func_t func, void* arg,
 }
 
 static void nuttx_thread_destroy(mqtt_thread_t thread) {
-    pthread_cancel(*(pthread_t*)thread);
+    /* NuttX pthread_exit already exited, just join and free */
     pthread_join(*(pthread_t*)thread, NULL);
     free(thread);
 }

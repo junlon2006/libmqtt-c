@@ -66,7 +66,8 @@ static mqtt_thread_t tencentos_thread_create(mqtt_thread_func_t func, void* arg,
 }
 
 static void tencentos_thread_destroy(mqtt_thread_t thread) {
-    tos_task_destroy((k_task_t*)thread);
+    /* TencentOS thread_exit already destroyed, no-op */
+    (void)thread;
 }
 
 static void tencentos_thread_exit(void) {

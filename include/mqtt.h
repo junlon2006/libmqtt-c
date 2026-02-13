@@ -83,6 +83,7 @@ typedef struct {
     mqtt_state_t state;                                  /**< Connection state */
     mqtt_mutex_t mutex;                                  /**< Thread safety mutex */
     mqtt_thread_t recv_thread;                           /**< Receive thread handle */
+    mqtt_sem_t thread_exit_sem;                          /**< Thread exit synchronization semaphore */
     uint16_t packet_id;                                  /**< Packet ID counter */
     uint32_t last_ping_time;                             /**< Last ping timestamp */
     uint8_t send_buf[MQTT_MAX_PACKET_SIZE];              /**< Send buffer */

@@ -173,6 +173,7 @@ mqtt_client_t* mqtt_client_create(const mqtt_config_t* config) {
     client->packet_id = 1;
     client->sub_count = 0;
     client->mutex = os->mutex_create();
+    client->thread_exit_sem = os->sem_create(0);
     
     return client;
 }
@@ -184,6 +185,7 @@ void mqtt_client_destroy(mqtt_client_t* client) {
     mqtt_client_disconnect(client);
     
     if (client->mutex) os->mutex_destroy(client->mutex);
+    if (client->thread_exit_sem) os->sem_destroy(client->thread_exit_sem);
     os->free(client);
 }
 
@@ -233,9 +235,18 @@ void mqtt_client_disconnect(mqtt_client_t* client) {
     const mqtt_os_api_t* os = mqtt_os_get();
     const mqtt_net_api_t* net = mqtt_net_get();
     
-    os->mutex_lock(client->mutex, 0xFFFFFFFF);
-    
+    /* Signal thread to exit */
     client->running = 0;
+    
+    /* Wait for thread to signal completion */
+    if (client->recv_thread) {
+        os->sem_wait(client->thread_exit_sem, 0xFFFFFFFF);
+        os->thread_destroy(client->recv_thread);
+        client->recv_thread = NULL;
+    }
+    
+    /* Now safe to cleanup connection */
+    os->mutex_lock(client->mutex, 0xFFFFFFFF);
     
     int len = pack_disconnect(client->send_buf);
     net->send(client->socket, client->send_buf, len, 1000);
@@ -244,11 +255,6 @@ void mqtt_client_disconnect(mqtt_client_t* client) {
     client->state = MQTT_STATE_DISCONNECTED;
     
     os->mutex_unlock(client->mutex);
-    
-    if (client->recv_thread) {
-        os->thread_destroy(client->recv_thread);
-        client->recv_thread = NULL;
-    }
 }
 
 int mqtt_client_subscribe(mqtt_client_t* client, const char* topic, uint8_t qos) {
@@ -409,7 +415,10 @@ static void mqtt_recv_thread(void* arg) {
         }
     }
     
-    /* Call thread_exit if provided */
+    /* Signal thread exit completion */
+    os->sem_post(client->thread_exit_sem);
+    
+    /* Call thread_exit - RTOS implementation handles cleanup properly */
     if (os->thread_exit) {
         os->thread_exit();
     }
