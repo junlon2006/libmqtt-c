@@ -29,8 +29,8 @@ static void alios_mutex_destroy(mqtt_mutex_t mutex) {
     free(mutex);
 }
 
-static int alios_mutex_lock(mqtt_mutex_t mutex, uint32_t timeout_ms) {
-    return aos_mutex_lock((aos_mutex_t*)mutex, timeout_ms) == 0 ? 0 : -1;
+static int alios_mutex_lock(mqtt_mutex_t mutex) {
+    return aos_mutex_lock((aos_mutex_t*)mutex, AOS_WAIT_FOREVER) == 0 ? 0 : -1;
 }
 
 static void alios_mutex_unlock(mqtt_mutex_t mutex) {

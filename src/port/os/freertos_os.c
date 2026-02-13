@@ -26,9 +26,8 @@ static void freertos_mutex_destroy(mqtt_mutex_t mutex) {
     vSemaphoreDelete((SemaphoreHandle_t)mutex);
 }
 
-static int freertos_mutex_lock(mqtt_mutex_t mutex, uint32_t timeout_ms) {
-    TickType_t ticks = (timeout_ms == 0xFFFFFFFF) ? portMAX_DELAY : pdMS_TO_TICKS(timeout_ms);
-    return xSemaphoreTake((SemaphoreHandle_t)mutex, ticks) == pdTRUE ? 0 : -1;
+static int freertos_mutex_lock(mqtt_mutex_t mutex) {
+    return xSemaphoreTake((SemaphoreHandle_t)mutex, portMAX_DELAY) == pdTRUE ? 0 : -1;
 }
 
 static void freertos_mutex_unlock(mqtt_mutex_t mutex) {

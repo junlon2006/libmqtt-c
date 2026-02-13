@@ -25,9 +25,8 @@ static void rtthread_mutex_destroy(mqtt_mutex_t mutex) {
     rt_mutex_delete((rt_mutex_t)mutex);
 }
 
-static int rtthread_mutex_lock(mqtt_mutex_t mutex, uint32_t timeout_ms) {
-    rt_int32_t ticks = (timeout_ms == 0xFFFFFFFF) ? RT_WAITING_FOREVER : rt_tick_from_millisecond(timeout_ms);
-    return rt_mutex_take((rt_mutex_t)mutex, ticks) == RT_EOK ? 0 : -1;
+static int rtthread_mutex_lock(mqtt_mutex_t mutex) {
+    return rt_mutex_take((rt_mutex_t)mutex, RT_WAITING_FOREVER) == RT_EOK ? 0 : -1;
 }
 
 static void rtthread_mutex_unlock(mqtt_mutex_t mutex) {

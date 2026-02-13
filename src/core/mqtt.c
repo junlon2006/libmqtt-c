@@ -195,7 +195,7 @@ int mqtt_client_connect(mqtt_client_t* client) {
     const mqtt_os_api_t* os = mqtt_os_get();
     const mqtt_net_api_t* net = mqtt_net_get();
     
-    os->mutex_lock(client->mutex, 0xFFFFFFFF);
+    os->mutex_lock(client->mutex);
     
     client->socket = net->connect(client->config.host, client->config.port, 5000);
     if (!client->socket) {
@@ -246,7 +246,7 @@ void mqtt_client_disconnect(mqtt_client_t* client) {
     }
     
     /* Now safe to cleanup connection */
-    os->mutex_lock(client->mutex, 0xFFFFFFFF);
+    os->mutex_lock(client->mutex);
     
     int len = pack_disconnect(client->send_buf);
     net->send(client->socket, client->send_buf, len, 1000);
@@ -263,7 +263,7 @@ int mqtt_client_subscribe(mqtt_client_t* client, const char* topic, uint8_t qos)
     const mqtt_os_api_t* os = mqtt_os_get();
     const mqtt_net_api_t* net = mqtt_net_get();
     
-    os->mutex_lock(client->mutex, 0xFFFFFFFF);
+    os->mutex_lock(client->mutex);
     
     int len = pack_subscribe(client->send_buf, topic, qos, client->packet_id++);
     int ret = net->send(client->socket, client->send_buf, len, 5000);
@@ -295,7 +295,7 @@ int mqtt_client_publish(mqtt_client_t* client, const char* topic, const uint8_t*
     const mqtt_os_api_t* os = mqtt_os_get();
     const mqtt_net_api_t* net = mqtt_net_get();
     
-    os->mutex_lock(client->mutex, 0xFFFFFFFF);
+    os->mutex_lock(client->mutex);
     
     uint16_t packet_id = (qos > 0) ? client->packet_id++ : 0;
     int pkt_len = pack_publish(client->send_buf, topic, payload, len, qos, packet_id);
@@ -350,7 +350,7 @@ int mqtt_client_loop(mqtt_client_t* client) {
     uint32_t keepalive_ms = client->config.keepalive * 1000;
     
     if (now - client->last_ping_time >= keepalive_ms / 2) {
-        os->mutex_lock(client->mutex, 0xFFFFFFFF);
+        os->mutex_lock(client->mutex);
         
         int len = pack_pingreq(client->send_buf);
         if (net->send(client->socket, client->send_buf, len, 1000) != len) {
@@ -380,7 +380,7 @@ static void mqtt_recv_thread(void* arg) {
     while (client->running) {
         int len = net->recv(client->socket, client->recv_buf, MQTT_RECV_BUF_SIZE, 1000);
         if (len < 0) {
-            os->mutex_lock(client->mutex, 0xFFFFFFFF);
+            os->mutex_lock(client->mutex);
             if (client->state == MQTT_STATE_CONNECTED) {
                 client->state = MQTT_STATE_DISCONNECTED;
                 net->disconnect(client->socket);

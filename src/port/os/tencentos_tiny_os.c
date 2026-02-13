@@ -28,9 +28,8 @@ static void tencentos_mutex_destroy(mqtt_mutex_t mutex) {
     tos_mmheap_free(mutex);
 }
 
-static int tencentos_mutex_lock(mqtt_mutex_t mutex, uint32_t timeout_ms) {
-    k_tick_t timeout = (timeout_ms == 0xFFFFFFFF) ? TOS_TIME_FOREVER : tos_millisec2tick(timeout_ms);
-    return tos_mutex_pend_timed((k_mutex_t*)mutex, timeout) == K_ERR_NONE ? 0 : -1;
+static int tencentos_mutex_lock(mqtt_mutex_t mutex) {
+    return tos_mutex_pend_timed((k_mutex_t*)mutex, TOS_TIME_FOREVER) == K_ERR_NONE ? 0 : -1;
 }
 
 static void tencentos_mutex_unlock(mqtt_mutex_t mutex) {

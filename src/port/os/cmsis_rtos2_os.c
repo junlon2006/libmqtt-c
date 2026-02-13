@@ -26,9 +26,8 @@ static void cmsis_mutex_destroy(mqtt_mutex_t mutex) {
     osMutexDelete((osMutexId_t)mutex);
 }
 
-static int cmsis_mutex_lock(mqtt_mutex_t mutex, uint32_t timeout_ms) {
-    uint32_t timeout = (timeout_ms == 0xFFFFFFFF) ? osWaitForever : timeout_ms;
-    return osMutexAcquire((osMutexId_t)mutex, timeout) == osOK ? 0 : -1;
+static int cmsis_mutex_lock(mqtt_mutex_t mutex) {
+    return osMutexAcquire((osMutexId_t)mutex, osWaitForever) == osOK ? 0 : -1;
 }
 
 static void cmsis_mutex_unlock(mqtt_mutex_t mutex) {

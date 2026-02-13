@@ -31,7 +31,7 @@ static void riot_mutex_destroy(mqtt_mutex_t mutex) {
     free(mutex);
 }
 
-static int riot_mutex_lock(mqtt_mutex_t mutex, uint32_t timeout_ms) {
+static int riot_mutex_lock(mqtt_mutex_t mutex) {
     mutex_lock((mutex_t*)mutex);
     return 0;
 }

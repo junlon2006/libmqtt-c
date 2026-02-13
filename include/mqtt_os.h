@@ -47,12 +47,11 @@ typedef struct {
     /** @brief Destroy a mutex */
     void (*mutex_destroy)(mqtt_mutex_t mutex);
     
-    /** @brief Lock a mutex with timeout
+    /** @brief Lock a mutex (blocking)
      *  @param mutex Mutex handle
-     *  @param timeout_ms Timeout in milliseconds (0xFFFFFFFF for infinite)
      *  @return 0 on success, -1 on failure
      */
-    int (*mutex_lock)(mqtt_mutex_t mutex, uint32_t timeout_ms);
+    int (*mutex_lock)(mqtt_mutex_t mutex);
     
     /** @brief Unlock a mutex */
     void (*mutex_unlock)(mqtt_mutex_t mutex);

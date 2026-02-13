@@ -31,10 +31,9 @@ static void ucos3_mutex_destroy(mqtt_mutex_t mutex) {
     free(mutex);
 }
 
-static int ucos3_mutex_lock(mqtt_mutex_t mutex, uint32_t timeout_ms) {
+static int ucos3_mutex_lock(mqtt_mutex_t mutex) {
     OS_ERR err;
-    OS_TICK timeout = (timeout_ms == 0xFFFFFFFF) ? 0 : timeout_ms;
-    OSMutexPend((OS_MUTEX*)mutex, timeout, OS_OPT_PEND_BLOCKING, NULL, &err);
+    OSMutexPend((OS_MUTEX*)mutex, 0, OS_OPT_PEND_BLOCKING, NULL, &err);
     return (err == OS_ERR_NONE) ? 0 : -1;
 }
 

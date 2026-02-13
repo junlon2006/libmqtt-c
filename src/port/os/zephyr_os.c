@@ -27,9 +27,8 @@ static void zephyr_mutex_destroy(mqtt_mutex_t mutex) {
     k_free(mutex);
 }
 
-static int zephyr_mutex_lock(mqtt_mutex_t mutex, uint32_t timeout_ms) {
-    k_timeout_t timeout = (timeout_ms == 0xFFFFFFFF) ? K_FOREVER : K_MSEC(timeout_ms);
-    return k_mutex_lock((struct k_mutex*)mutex, timeout) == 0 ? 0 : -1;
+static int zephyr_mutex_lock(mqtt_mutex_t mutex) {
+    return k_mutex_lock((struct k_mutex*)mutex, K_FOREVER) == 0 ? 0 : -1;
 }
 
 static void zephyr_mutex_unlock(mqtt_mutex_t mutex) {

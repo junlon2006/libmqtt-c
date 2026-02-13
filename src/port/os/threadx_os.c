@@ -29,9 +29,8 @@ static void threadx_mutex_destroy(mqtt_mutex_t mutex) {
     free(mutex);
 }
 
-static int threadx_mutex_lock(mqtt_mutex_t mutex, uint32_t timeout_ms) {
-    ULONG ticks = (timeout_ms == 0xFFFFFFFF) ? TX_WAIT_FOREVER : (timeout_ms * TX_TIMER_TICKS_PER_SECOND / 1000);
-    return tx_mutex_get((TX_MUTEX*)mutex, ticks) == TX_SUCCESS ? 0 : -1;
+static int threadx_mutex_lock(mqtt_mutex_t mutex) {
+    return tx_mutex_get((TX_MUTEX*)mutex, TX_WAIT_FOREVER) == TX_SUCCESS ? 0 : -1;
 }
 
 static void threadx_mutex_unlock(mqtt_mutex_t mutex) {

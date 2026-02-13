@@ -33,7 +33,7 @@ static void nuttx_mutex_destroy(mqtt_mutex_t mutex) {
     free(mutex);
 }
 
-static int nuttx_mutex_lock(mqtt_mutex_t mutex, uint32_t timeout_ms) {
+static int nuttx_mutex_lock(mqtt_mutex_t mutex) {
     return pthread_mutex_lock((pthread_mutex_t*)mutex) == 0 ? 0 : -1;
 }
 

@@ -33,9 +33,8 @@ static void liteos_mutex_destroy(mqtt_mutex_t mutex) {
     free(mutex);
 }
 
-static int liteos_mutex_lock(mqtt_mutex_t mutex, uint32_t timeout_ms) {
-    UINT32 ticks = (timeout_ms == 0xFFFFFFFF) ? LOS_WAIT_FOREVER : LOS_MS2Tick(timeout_ms);
-    return LOS_MuxPend(*(UINT32*)mutex, ticks) == LOS_OK ? 0 : -1;
+static int liteos_mutex_lock(mqtt_mutex_t mutex) {
+    return LOS_MuxPend(*(UINT32*)mutex, LOS_WAIT_FOREVER) == LOS_OK ? 0 : -1;
 }
 
 static void liteos_mutex_unlock(mqtt_mutex_t mutex) {
