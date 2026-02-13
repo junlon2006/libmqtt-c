@@ -5,11 +5,12 @@ A minimal MQTT 3.1.1 client implementation designed for resource-constrained RTO
 ## Features
 
 - **Lightweight**: Core code uses <2KB RAM, suitable for embedded devices
-- **Portable**: Fully abstracted OS and network layers, supports any RTOS
-- **Zero Dependencies**: No third-party library dependencies
+- **Portable**: Fully abstracted OS and network layers, supports 13+ RTOS platforms
+- **Zero Dependencies**: No third-party library dependencies (TLS optional)
 - **MQTT 3.1.1**: Supports QoS 0/1, CONNECT, PUBLISH, SUBSCRIBE, PING
 - **Auto-Reconnect**: Automatic reconnection with subscription recovery
 - **Thread-Safe**: Built-in mutex protection
+- **TLS/SSL Support**: Optional secure connections via abstraction layer
 
 ## Architecture
 
@@ -18,20 +19,25 @@ include/           - Public API headers
   mqtt.h           - Main MQTT client API
   mqtt_os.h        - OS abstraction layer interface
   mqtt_net.h       - Network abstraction layer interface
+  mqtt_tls.h       - TLS/SSL abstraction layer interface
 
 src/core/          - Core MQTT implementation
   mqtt.c           - MQTT client logic
   mqtt_os.c        - OS abstraction layer
   mqtt_net.c       - Network abstraction layer
+  mqtt_tls.c       - TLS abstraction layer
 
 src/port/          - Platform-specific implementations
-  posix_os.c       - POSIX OS implementation
-  posix_net.c      - POSIX network implementation
-  example_freertos.c - FreeRTOS example
-  example_lwip.c   - lwIP network example
+  os/              - OS layer ports (13 RTOS supported)
+  net/             - Network layer ports
+  tls/             - TLS layer ports
+  README.md        - Porting guide
 
 examples/          - Example applications
   demo.c           - Complete demo application
+
+docs/              - Documentation
+  TLS_SUPPORT.md   - TLS/SSL usage guide
 ```
 
 ## Building
@@ -168,8 +174,9 @@ int main(void) {
 
 ## Supported Platforms
 
-- **RTOS**: FreeRTOS, RT-Thread, ThreadX, Zephyr, AliOS Things, LiteOS, Mbed OS, CMSIS-RTOS2, NuttX, uC/OS-III, RIOT OS, TencentOS-tiny
+- **RTOS**: FreeRTOS, RT-Thread, ThreadX, Zephyr, AliOS Things, LiteOS, Mbed OS, CMSIS-RTOS2, NuttX, uC/OS-III, RIOT OS, TencentOS-tiny, POSIX
 - **Network**: lwIP, BSD sockets, custom TCP/IP stacks
+- **TLS**: mbedTLS (OpenSSL, WolfSSL via abstraction layer)
 - **Testing**: Linux, macOS, Unix (POSIX)
 
 ## Configuration
@@ -182,6 +189,20 @@ Edit `include/mqtt.h` to adjust:
 #define MQTT_MAX_SUBSCRIPTIONS 8    // Max subscriptions to track
 ```
 
+## TLS/SSL Support
+
+For secure MQTT connections (MQTTS), see [docs/TLS_SUPPORT.md](docs/TLS_SUPPORT.md).
+
+```c
+mqtt_config_t config = {
+    .host = "mqtt.example.com",
+    .port = 8883,  // TLS port
+    .use_tls = 1,
+    .tls_config = &tls_config,
+    // ...
+};
+```
+
 ## Examples
 
 See `examples/demo.c` for a complete working example.
@@ -189,6 +210,13 @@ See `examples/demo.c` for a complete working example.
 Run the demo:
 ```bash
 ./mqtt_demo
+```
+
+For TLS/SSL example:
+```bash
+cd examples
+./build_tls_demo.sh
+./tls_demo
 ```
 
 ## License

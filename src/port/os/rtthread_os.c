@@ -1,6 +1,9 @@
 /**
  * @file rtthread_os.c
  * @brief RT-Thread RTOS OS abstraction layer implementation
+ * 
+ * RT-Thread is an open source real-time operating system from China.
+ * This implementation provides OS abstraction for RT-Thread kernel.
  */
 
 #include "mqtt_os.h"

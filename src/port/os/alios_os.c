@@ -1,6 +1,9 @@
 /**
  * @file alios_os.c
  * @brief AliOS Things OS abstraction layer implementation
+ * 
+ * AliOS Things is an IoT operating system from Alibaba Cloud.
+ * This implementation provides OS abstraction for AliOS Things kernel.
  */
 
 #include "mqtt_os.h"

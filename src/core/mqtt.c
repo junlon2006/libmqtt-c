@@ -1,3 +1,8 @@
+/**
+ * @file mqtt.c
+ * @brief MQTT core implementation
+ */
+
 #include "mqtt.h"
 #include <string.h>
 

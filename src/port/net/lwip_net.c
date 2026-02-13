@@ -1,3 +1,11 @@
+/**
+ * @file lwip_net.c
+ * @brief lwIP network stack abstraction layer implementation
+ * 
+ * This file implements the network abstraction layer for lwIP TCP/IP stack.
+ * Commonly used in embedded systems with custom network hardware.
+ */
+
 #include "mqtt_net.h"
 #include "lwip/sockets.h"
 #include "lwip/netdb.h"

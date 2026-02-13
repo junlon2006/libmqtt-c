@@ -1,6 +1,9 @@
 /**
  * @file tencentos_tiny_os.c
  * @brief TencentOS-tiny OS abstraction layer implementation
+ * 
+ * TencentOS-tiny is a lightweight IoT operating system from Tencent.
+ * This implementation provides OS abstraction for TencentOS-tiny kernel.
  */
 
 #include "mqtt_os.h"

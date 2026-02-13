@@ -12,10 +12,19 @@ src/port/
 │   ├── rtthread_os.c    - RT-Thread
 │   ├── threadx_os.c     - ThreadX
 │   ├── alios_os.c       - AliOS Things
-│   └── liteos_os.c      - Huawei LiteOS
-└── net/             - Network abstraction layer implementations
-    ├── posix_net.c      - POSIX sockets (BSD)
-    └── lwip_net.c       - lwIP TCP/IP stack
+│   ├── liteos_os.c      - Huawei LiteOS
+│   ├── zephyr_os.c      - Zephyr RTOS
+│   ├── mbed_os.c        - Arm Mbed OS
+│   ├── cmsis_rtos2_os.c - CMSIS-RTOS2
+│   ├── nuttx_os.c       - NuttX
+│   ├── ucos3_os.c       - uC/OS-III
+│   ├── riot_os.c        - RIOT OS
+│   └── tencentos_tiny_os.c - TencentOS-tiny
+├── net/             - Network abstraction layer implementations
+│   ├── posix_net.c      - POSIX sockets (BSD)
+│   └── lwip_net.c       - lwIP TCP/IP stack
+└── tls/             - TLS/SSL abstraction layer implementations
+    └── mbedtls_impl.c   - mbedTLS implementation
 ```
 
 ## Supported RTOS Platforms
@@ -96,6 +105,14 @@ src/port/
 - **File**: `net/lwip_net.c`
 - **Init**: `mqtt_lwip_init()`
 - **Dependencies**: lwIP TCP/IP stack
+
+## Supported TLS Libraries
+
+### mbedTLS
+- **File**: `tls/mbedtls_impl.c`
+- **Init**: `mqtt_mbedtls_init()`
+- **Dependencies**: mbedTLS library
+- **Best for**: Embedded systems, IoT devices
 
 ## Porting to New Platform
 

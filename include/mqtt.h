@@ -64,6 +64,8 @@ typedef struct {
     char* password;                  /**< Password (NULL if not used) */
     uint16_t keepalive;              /**< Keep-alive interval in seconds */
     uint8_t clean_session;           /**< Clean session flag (1=clean, 0=persistent) */
+    uint8_t use_tls;                 /**< Enable TLS/SSL (1=enabled, 0=disabled) */
+    void* tls_config;                /**< TLS configuration pointer */
     mqtt_msg_callback_t msg_cb;      /**< Message received callback */
     void* user_data;                 /**< User-defined data passed to callback */
 } mqtt_config_t;

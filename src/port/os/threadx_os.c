@@ -1,6 +1,9 @@
 /**
  * @file threadx_os.c
  * @brief ThreadX RTOS OS abstraction layer implementation
+ * 
+ * ThreadX (Azure RTOS) is a real-time operating system from Microsoft.
+ * This implementation provides OS abstraction for ThreadX kernel.
  */
 
 #include "mqtt_os.h"

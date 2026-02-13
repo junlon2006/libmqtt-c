@@ -1,3 +1,8 @@
+/**
+ * @file mqtt_os.c
+ * @brief MQTT OS abstraction layer implementation
+ */
+
 #include "mqtt_os.h"
 
 static const mqtt_os_api_t* g_os_api = NULL;

@@ -1,6 +1,9 @@
 /**
  * @file liteos_os.c
  * @brief Huawei LiteOS OS abstraction layer implementation
+ * 
+ * LiteOS is a lightweight IoT operating system from Huawei.
+ * This implementation provides OS abstraction for LiteOS kernel.
  */
 
 #include "mqtt_os.h"
