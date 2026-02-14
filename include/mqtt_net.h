@@ -43,10 +43,9 @@ typedef struct {
      *  @param sock Socket handle
      *  @param buf Data buffer to send
      *  @param len Length of data
-     *  @param timeout_ms Send timeout in milliseconds
      *  @return Number of bytes sent, or negative on error
      */
-    int (*send)(mqtt_socket_t sock, const uint8_t* buf, size_t len, uint32_t timeout_ms);
+    int (*send)(mqtt_socket_t sock, const uint8_t* buf, size_t len);
     
     /** @brief Receive data from socket
      *  @param sock Socket handle

@@ -206,7 +206,7 @@ int mqtt_client_connect(mqtt_client_t* client) {
     int len = pack_connect(client->send_buf, client->config.client_id, client->config.username,
                            client->config.password, client->config.keepalive, client->config.clean_session);
     
-    if (net->send(client->socket, client->send_buf, len, 5000) != len) {
+    if (net->send(client->socket, client->send_buf, len) != len) {
         net->disconnect(client->socket);
         os->mutex_unlock(client->mutex);
         return -1;
@@ -249,7 +249,7 @@ void mqtt_client_disconnect(mqtt_client_t* client) {
     os->mutex_lock(client->mutex);
     
     int len = pack_disconnect(client->send_buf);
-    net->send(client->socket, client->send_buf, len, 1000);
+    net->send(client->socket, client->send_buf, len);
     
     net->disconnect(client->socket);
     client->state = MQTT_STATE_DISCONNECTED;
@@ -266,7 +266,7 @@ int mqtt_client_subscribe(mqtt_client_t* client, const char* topic, uint8_t qos)
     os->mutex_lock(client->mutex);
     
     int len = pack_subscribe(client->send_buf, topic, qos, client->packet_id++);
-    int ret = net->send(client->socket, client->send_buf, len, 5000);
+    int ret = net->send(client->socket, client->send_buf, len);
     
     if (ret == len && client->sub_count < MQTT_MAX_SUBSCRIPTIONS) {
         int found = 0;
@@ -299,7 +299,7 @@ int mqtt_client_publish(mqtt_client_t* client, const char* topic, const uint8_t*
     
     uint16_t packet_id = (qos > 0) ? client->packet_id++ : 0;
     int pkt_len = pack_publish(client->send_buf, topic, payload, len, qos, packet_id);
-    int ret = net->send(client->socket, client->send_buf, pkt_len, 5000);
+    int ret = net->send(client->socket, client->send_buf, pkt_len);
     
     os->mutex_unlock(client->mutex);
     
@@ -324,7 +324,7 @@ static int mqtt_try_reconnect(mqtt_client_t* client) {
     int len = pack_connect(client->send_buf, client->config.client_id, client->config.username,
                            client->config.password, client->config.keepalive, client->config.clean_session);
     
-    if (net->send(client->socket, client->send_buf, len, 5000) != len) {
+    if (net->send(client->socket, client->send_buf, len) != len) {
         net->disconnect(client->socket);
         client->socket = NULL;
         os->mutex_unlock(client->mutex);
@@ -342,7 +342,7 @@ static int mqtt_try_reconnect(mqtt_client_t* client) {
     for (int i = 0; i < client->sub_count; i++) {
         len = pack_subscribe(client->send_buf, client->subscriptions[i].topic,
                              client->subscriptions[i].qos, client->packet_id++);
-        if (net->send(client->socket, client->send_buf, len, 5000) != len) {
+        if (net->send(client->socket, client->send_buf, len) != len) {
             net->disconnect(client->socket);
             client->socket = NULL;
             os->mutex_unlock(client->mutex);
@@ -385,7 +385,7 @@ static int mqtt_send_ping(mqtt_client_t* client) {
     os->mutex_lock(client->mutex);
     
     int len = pack_pingreq(client->send_buf);
-    if (net->send(client->socket, client->send_buf, len, 1000) != len) {
+    if (net->send(client->socket, client->send_buf, len) != len) {
         client->state = MQTT_STATE_DISCONNECTED;
         net->disconnect(client->socket);
         client->socket = NULL;

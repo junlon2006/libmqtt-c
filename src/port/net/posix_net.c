@@ -158,7 +158,7 @@ static void posix_disconnect(mqtt_socket_t sock) {
     close((int)(intptr_t)sock);
 }
 
-static int posix_send(mqtt_socket_t sock, const uint8_t* buf, size_t len, uint32_t timeout_ms) {
+static int posix_send(mqtt_socket_t sock, const uint8_t* buf, size_t len) {
     int fd = (int)(intptr_t)sock;
     ssize_t ret;
     do {
