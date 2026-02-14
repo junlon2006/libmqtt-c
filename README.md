@@ -25,7 +25,7 @@ A minimal MQTT 3.1.1 client implementation designed for resource-constrained RTO
                          ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                    MQTT Client API                              │
-│  mqtt_client_create() / connect() / subscribe() / publish()     │
+│  mqtt_client_create() / subscribe() / publish() / destroy()     │
 └────────────────────────┬────────────────────────────────────────┘
                          │
                          ▼
@@ -125,7 +125,7 @@ typedef struct {
     void (*free)(void* ptr);
     mqtt_mutex_t (*mutex_create)(void);
     void (*mutex_destroy)(mqtt_mutex_t mutex);
-    int (*mutex_lock)(mqtt_mutex_t mutex, uint32_t timeout_ms);
+    int (*mutex_lock)(mqtt_mutex_t mutex);
     void (*mutex_unlock)(mqtt_mutex_t mutex);
     // ... more functions
 } mqtt_os_api_t;
@@ -141,7 +141,7 @@ Implement the `mqtt_net_api_t` interface for your network stack. See `src/port/p
 typedef struct {
     mqtt_socket_t (*connect)(const char* host, uint16_t port, uint32_t timeout_ms);
     void (*disconnect)(mqtt_socket_t sock);
-    int (*send)(mqtt_socket_t sock, const uint8_t* buf, size_t len, uint32_t timeout_ms);
+    int (*send)(mqtt_socket_t sock, const uint8_t* buf, size_t len);
     int (*recv)(mqtt_socket_t sock, uint8_t* buf, size_t len, uint32_t timeout_ms);
 } mqtt_net_api_t;
 
@@ -176,9 +176,12 @@ int main(void) {
         .user_data = NULL
     };
     
-    // Create and connect
+    // Create and connect (automatically connects to broker)
     mqtt_client_t* client = mqtt_client_create(&config);
-    mqtt_client_connect(client);
+    if (!client) {
+        printf("Failed to create and connect\n");
+        return -1;
+    }
     
     // Subscribe
     mqtt_client_subscribe(client, "test/topic", 0);
@@ -187,14 +190,12 @@ int main(void) {
     const char* msg = "Hello MQTT";
     mqtt_client_publish(client, "test/topic", (uint8_t*)msg, strlen(msg), 0);
     
-    // Main loop (handles keep-alive and auto-reconnect)
+    // Main loop
     while (1) {
-        mqtt_client_loop(client);
         sleep(1);
     }
     
-    // Cleanup
-    mqtt_client_disconnect(client);
+    // Cleanup (automatically disconnects)
     mqtt_client_destroy(client);
     
     return 0;
@@ -205,21 +206,18 @@ int main(void) {
 
 ### Client Management
 
-- `mqtt_client_create()` - Create MQTT client instance
-- `mqtt_client_destroy()` - Destroy client instance
-- `mqtt_client_connect()` - Connect to broker
-- `mqtt_client_disconnect()` - Disconnect from broker
+- `mqtt_client_create()` - Create and connect MQTT client instance
+- `mqtt_client_destroy()` - Disconnect and destroy client instance
 - `mqtt_client_is_connected()` - Check connection status
 
 ### Messaging
 
 - `mqtt_client_subscribe()` - Subscribe to topic
 - `mqtt_client_publish()` - Publish message
-- `mqtt_client_loop()` - Maintain connection (must be called periodically)
 
 ### Features
 
-- **Automatic Reconnection**: `mqtt_client_loop()` automatically reconnects on network failure
+- **Automatic Reconnection**: Background thread automatically reconnects on network failure
 - **Subscription Recovery**: All subscriptions are automatically restored after reconnection
 - **Keep-Alive**: Automatic PING messages to maintain connection
 

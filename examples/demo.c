@@ -71,17 +71,10 @@ int main(void) {
         .user_data = NULL
     };
     
-    printf("Creating MQTT client...\n");
+    printf("Creating and connecting MQTT client to %s:%d...\n", config.host, config.port);
     client = mqtt_client_create(&config);
     if (!client) {
-        printf("Failed to create client\n");
-        return -1;
-    }
-    
-    printf("Connecting to broker %s:%d...\n", config.host, config.port);
-    if (mqtt_client_connect(client) != 0) {
-        printf("Failed to connect to broker\n");
-        mqtt_client_destroy(client);
+        printf("Failed to create and connect client\n");
         return -1;
     }
     
@@ -122,8 +115,7 @@ int main(void) {
         mqtt_os_get()->sleep_ms(MQTT_LOOP_INTERVAL_MS);
     }
     
-    printf("\nDisconnecting...\n");
-    mqtt_client_disconnect(client);
+    printf("\nDisconnecting and destroying client...\n");
     mqtt_client_destroy(client);
     
     printf("Done!\n");

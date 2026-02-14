@@ -96,30 +96,17 @@ typedef struct {
 } mqtt_client_t;
 
 /**
- * @brief Create MQTT client instance
+ * @brief Create and connect MQTT client instance
  * @param config Client configuration
  * @return Client handle on success, NULL on failure
  */
 mqtt_client_t* mqtt_client_create(const mqtt_config_t* config);
 
 /**
- * @brief Destroy MQTT client instance
+ * @brief Disconnect and destroy MQTT client instance
  * @param client Client handle
  */
 void mqtt_client_destroy(mqtt_client_t* client);
-
-/**
- * @brief Connect to MQTT broker
- * @param client Client handle
- * @return 0 on success, -1 on failure
- */
-int mqtt_client_connect(mqtt_client_t* client);
-
-/**
- * @brief Disconnect from MQTT broker
- * @param client Client handle
- */
-void mqtt_client_disconnect(mqtt_client_t* client);
 
 /**
  * @brief Subscribe to a topic
