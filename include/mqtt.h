@@ -86,9 +86,11 @@ typedef struct {
     mqtt_sem_t thread_exit_sem;                          /**< Thread exit synchronization semaphore */
     uint16_t packet_id;                                  /**< Packet ID counter */
     uint32_t last_ping_time;                             /**< Last ping timestamp */
+    uint32_t ping_sent_time;                             /**< Ping sent timestamp for timeout check */
     uint8_t send_buf[MQTT_MAX_PACKET_SIZE];              /**< Send buffer */
     uint8_t recv_buf[MQTT_RECV_BUF_SIZE];                /**< Receive buffer */
     volatile uint8_t running;                            /**< Thread running flag */
+    volatile uint8_t waiting_pingresp;                   /**< Waiting for PINGRESP flag */
     mqtt_subscription_t subscriptions[MQTT_MAX_SUBSCRIPTIONS]; /**< Subscription list */
     uint8_t sub_count;                                   /**< Number of subscriptions */
 } mqtt_client_t;

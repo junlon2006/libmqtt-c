@@ -204,7 +204,7 @@ int mqtt_client_connect(mqtt_client_t* client) {
     }
     
     int len = pack_connect(client->send_buf, client->config.client_id, client->config.username,
-                          client->config.password, client->config.keepalive, client->config.clean_session);
+                           client->config.password, client->config.keepalive, client->config.clean_session);
     
     if (net->send(client->socket, client->send_buf, len, 5000) != len) {
         net->disconnect(client->socket);
@@ -310,34 +310,132 @@ int mqtt_client_is_connected(mqtt_client_t* client) {
     return client && client->state == MQTT_STATE_CONNECTED;
 }
 
+static int mqtt_try_reconnect(mqtt_client_t* client) {
+    const mqtt_net_api_t* net = mqtt_net_get();
+    const mqtt_os_api_t* os = mqtt_os_get();
+    
+    client->socket = net->connect(client->config.host, client->config.port, 5000);
+    if (!client->socket) {
+        return -1;
+    }
+    
+    os->mutex_lock(client->mutex);
+    
+    int len = pack_connect(client->send_buf, client->config.client_id, client->config.username,
+                           client->config.password, client->config.keepalive, client->config.clean_session);
+    
+    if (net->send(client->socket, client->send_buf, len, 5000) != len) {
+        net->disconnect(client->socket);
+        client->socket = NULL;
+        os->mutex_unlock(client->mutex);
+        return -1;
+    }
+    
+    int recv_len = net->recv(client->socket, client->recv_buf, MQTT_RECV_BUF_SIZE, 5000);
+    if (recv_len < 4 || (client->recv_buf[0] >> 4) != MQTT_CONNACK || client->recv_buf[3] != 0) {
+        net->disconnect(client->socket);
+        client->socket = NULL;
+        os->mutex_unlock(client->mutex);
+        return -1;
+    }
+    
+    client->state = MQTT_STATE_CONNECTED;
+    client->last_ping_time = os->get_time_ms();
+    client->waiting_pingresp = 0;
+    
+    for (int i = 0; i < client->sub_count; i++) {
+        len = pack_subscribe(client->send_buf, client->subscriptions[i].topic,
+                             client->subscriptions[i].qos, client->packet_id++);
+        net->send(client->socket, client->send_buf, len, 5000);
+    }
+    
+    os->mutex_unlock(client->mutex);
+    return 0;
+}
+
+static int mqtt_send_ping(mqtt_client_t* client) {
+    const mqtt_net_api_t* net = mqtt_net_get();
+    const mqtt_os_api_t* os = mqtt_os_get();
+    
+    uint32_t now = os->get_time_ms();
+    uint32_t keepalive_ms = client->config.keepalive * 1000;
+    
+    if (client->waiting_pingresp) {
+        if (now - client->ping_sent_time >= keepalive_ms / 2) {
+            os->mutex_lock(client->mutex);
+            client->state = MQTT_STATE_DISCONNECTED;
+            client->waiting_pingresp = 0;
+            net->disconnect(client->socket);
+            client->socket = NULL;
+            os->mutex_unlock(client->mutex);
+            return -1;
+        }
+        return 0;
+    }
+    
+    if (now - client->last_ping_time < keepalive_ms / 2) {
+        return 0;
+    }
+    
+    os->mutex_lock(client->mutex);
+    
+    int len = pack_pingreq(client->send_buf);
+    if (net->send(client->socket, client->send_buf, len, 1000) != len) {
+        client->state = MQTT_STATE_DISCONNECTED;
+        net->disconnect(client->socket);
+        client->socket = NULL;
+        os->mutex_unlock(client->mutex);
+        return -1;
+    }
+    client->ping_sent_time = now;
+    client->waiting_pingresp = 1;
+    
+    os->mutex_unlock(client->mutex);
+    return 0;
+}
+
+static void mqtt_handle_publish(mqtt_client_t* client, int len) {
+    if (!client->config.msg_cb) return;
+    
+    size_t remaining;
+    int offset = 1 + decode_remaining_length(client->recv_buf + 1, &remaining);
+    
+    uint16_t topic_len = (client->recv_buf[offset] << 8) | client->recv_buf[offset + 1];
+    offset += 2;
+    
+    char topic[128];
+    if (topic_len >= sizeof(topic)) return;
+    
+    memcpy(topic, client->recv_buf + offset, topic_len);
+    topic[topic_len] = '\0';
+    offset += topic_len;
+    
+    uint8_t qos = (client->recv_buf[0] >> 1) & 0x03;
+    if (qos > 0) offset += 2;
+    
+    size_t payload_len = len - offset;
+    client->config.msg_cb(topic, client->recv_buf + offset, payload_len, client->config.user_data);
+}
+
 static void mqtt_recv_thread(void* arg) {
     mqtt_client_t* client = (mqtt_client_t*)arg;
     const mqtt_net_api_t* net = mqtt_net_get();
     const mqtt_os_api_t* os = mqtt_os_get();
     
     while (client->running) {
-        /* Handle keepalive ping */
-        uint32_t now = os->get_time_ms();
-        uint32_t keepalive_ms = client->config.keepalive * 1000;
-        
-        if (now - client->last_ping_time >= keepalive_ms / 2) {
-            os->mutex_lock(client->mutex);
-            
-            int len = pack_pingreq(client->send_buf);
-            if (net->send(client->socket, client->send_buf, len, 1000) != len) {
-                client->state = MQTT_STATE_DISCONNECTED;
-                net->disconnect(client->socket);
-                client->socket = NULL;
-                os->mutex_unlock(client->mutex);
-                break;
+        if (client->state == MQTT_STATE_DISCONNECTED) {
+            if (mqtt_try_reconnect(client) != 0) {
+                os->sleep_ms(5000);
             }
-            client->last_ping_time = now;
-            
-            os->mutex_unlock(client->mutex);
+            continue;
         }
         
-        /* Receive and process messages */
+        if (mqtt_send_ping(client) != 0) {
+            continue;
+        }
+        
         int len = net->recv(client->socket, client->recv_buf, MQTT_RECV_BUF_SIZE, 1000);
+        
         if (len < 0) {
             os->mutex_lock(client->mutex);
             if (client->state == MQTT_STATE_CONNECTED) {
@@ -346,31 +444,20 @@ static void mqtt_recv_thread(void* arg) {
                 client->socket = NULL;
             }
             os->mutex_unlock(client->mutex);
-            break;
+            continue;
         }
         if (len == 0) continue;
         
         uint8_t type = client->recv_buf[0] >> 4;
         
-        if (type == MQTT_PUBLISH && client->config.msg_cb) {
-            size_t remaining;
-            int offset = 1 + decode_remaining_length(client->recv_buf + 1, &remaining);
-            
-            uint16_t topic_len = (client->recv_buf[offset] << 8) | client->recv_buf[offset + 1];
-            offset += 2;
-            
-            char topic[128];
-            if (topic_len < sizeof(topic)) {
-                memcpy(topic, client->recv_buf + offset, topic_len);
-                topic[topic_len] = '\0';
-                offset += topic_len;
-                
-                uint8_t qos = (client->recv_buf[0] >> 1) & 0x03;
-                if (qos > 0) offset += 2;
-                
-                size_t payload_len = len - offset;
-                client->config.msg_cb(topic, client->recv_buf + offset, payload_len, client->config.user_data);
-            }
+        if (type == MQTT_PINGRESP) {
+            client->last_ping_time = os->get_time_ms();
+            client->waiting_pingresp = 0;
+            continue;
+        }
+        
+        if (type == MQTT_PUBLISH) {
+            mqtt_handle_publish(client, len);
         }
     }
     
