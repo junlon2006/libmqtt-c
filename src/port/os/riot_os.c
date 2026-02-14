@@ -51,13 +51,9 @@ static void riot_sem_destroy(mqtt_sem_t sem) {
     free(sem);
 }
 
-static int riot_sem_wait(mqtt_sem_t sem, uint32_t timeout_ms) {
-    if (timeout_ms == 0xFFFFFFFF) {
-        sema_wait((sema_t*)sem);
-        return 0;
-    } else {
-        return sema_wait_timed((sema_t*)sem, timeout_ms * 1000) == 0 ? 0 : -1;
-    }
+static int riot_sem_wait(mqtt_sem_t sem) {
+    sema_wait((sema_t*)sem);
+    return 0;
 }
 
 static void riot_sem_post(mqtt_sem_t sem) {

@@ -48,9 +48,8 @@ static void threadx_sem_destroy(mqtt_sem_t sem) {
     free(sem);
 }
 
-static int threadx_sem_wait(mqtt_sem_t sem, uint32_t timeout_ms) {
-    ULONG ticks = (timeout_ms == 0xFFFFFFFF) ? TX_WAIT_FOREVER : (timeout_ms * TX_TIMER_TICKS_PER_SECOND / 1000);
-    return tx_semaphore_get((TX_SEMAPHORE*)sem, ticks) == TX_SUCCESS ? 0 : -1;
+static int threadx_sem_wait(mqtt_sem_t sem) {
+    return tx_semaphore_get((TX_SEMAPHORE*)sem, TX_WAIT_FOREVER) == TX_SUCCESS ? 0 : -1;
 }
 
 static void threadx_sem_post(mqtt_sem_t sem) {

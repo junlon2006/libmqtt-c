@@ -42,9 +42,8 @@ static void freertos_sem_destroy(mqtt_sem_t sem) {
     vSemaphoreDelete((SemaphoreHandle_t)sem);
 }
 
-static int freertos_sem_wait(mqtt_sem_t sem, uint32_t timeout_ms) {
-    TickType_t ticks = (timeout_ms == 0xFFFFFFFF) ? portMAX_DELAY : pdMS_TO_TICKS(timeout_ms);
-    return xSemaphoreTake((SemaphoreHandle_t)sem, ticks) == pdTRUE ? 0 : -1;
+static int freertos_sem_wait(mqtt_sem_t sem) {
+    return xSemaphoreTake((SemaphoreHandle_t)sem, portMAX_DELAY) == pdTRUE ? 0 : -1;
 }
 
 static void freertos_sem_post(mqtt_sem_t sem) {

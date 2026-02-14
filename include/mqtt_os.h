@@ -65,12 +65,11 @@ typedef struct {
     /** @brief Destroy a semaphore */
     void (*sem_destroy)(mqtt_sem_t sem);
     
-    /** @brief Wait on a semaphore with timeout
+    /** @brief Wait on a semaphore (blocking)
      *  @param sem Semaphore handle
-     *  @param timeout_ms Timeout in milliseconds
      *  @return 0 on success, -1 on failure
      */
-    int (*sem_wait)(mqtt_sem_t sem, uint32_t timeout_ms);
+    int (*sem_wait)(mqtt_sem_t sem);
     
     /** @brief Post to a semaphore */
     void (*sem_post)(mqtt_sem_t sem);

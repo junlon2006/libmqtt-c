@@ -52,7 +52,7 @@ static void nuttx_sem_destroy(mqtt_sem_t sem) {
     free(sem);
 }
 
-static int nuttx_sem_wait(mqtt_sem_t sem, uint32_t timeout_ms) {
+static int nuttx_sem_wait(mqtt_sem_t sem) {
     return sem_wait((sem_t*)sem) == 0 ? 0 : -1;
 }
 

@@ -52,9 +52,8 @@ static void liteos_sem_destroy(mqtt_sem_t sem) {
     free(sem);
 }
 
-static int liteos_sem_wait(mqtt_sem_t sem, uint32_t timeout_ms) {
-    UINT32 ticks = (timeout_ms == 0xFFFFFFFF) ? LOS_WAIT_FOREVER : LOS_MS2Tick(timeout_ms);
-    return LOS_SemPend(*(UINT32*)sem, ticks) == LOS_OK ? 0 : -1;
+static int liteos_sem_wait(mqtt_sem_t sem) {
+    return LOS_SemPend(*(UINT32*)sem, LOS_WAIT_FOREVER) == LOS_OK ? 0 : -1;
 }
 
 static void liteos_sem_post(mqtt_sem_t sem) {

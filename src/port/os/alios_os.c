@@ -48,8 +48,8 @@ static void alios_sem_destroy(mqtt_sem_t sem) {
     free(sem);
 }
 
-static int alios_sem_wait(mqtt_sem_t sem, uint32_t timeout_ms) {
-    return aos_sem_wait((aos_sem_t*)sem, timeout_ms) == 0 ? 0 : -1;
+static int alios_sem_wait(mqtt_sem_t sem) {
+    return aos_sem_wait((aos_sem_t*)sem, AOS_WAIT_FOREVER) == 0 ? 0 : -1;
 }
 
 static void alios_sem_post(mqtt_sem_t sem) {

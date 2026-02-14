@@ -55,10 +55,9 @@ static void ucos3_sem_destroy(mqtt_sem_t sem) {
     free(sem);
 }
 
-static int ucos3_sem_wait(mqtt_sem_t sem, uint32_t timeout_ms) {
+static int ucos3_sem_wait(mqtt_sem_t sem) {
     OS_ERR err;
-    OS_TICK timeout = (timeout_ms == 0xFFFFFFFF) ? 0 : timeout_ms;
-    OSSemPend((OS_SEM*)sem, timeout, OS_OPT_PEND_BLOCKING, NULL, &err);
+    OSSemPend((OS_SEM*)sem, 0, OS_OPT_PEND_BLOCKING, NULL, &err);
     return (err == OS_ERR_NONE) ? 0 : -1;
 }
 

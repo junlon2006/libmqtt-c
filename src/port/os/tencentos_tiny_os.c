@@ -47,9 +47,8 @@ static void tencentos_sem_destroy(mqtt_sem_t sem) {
     tos_mmheap_free(sem);
 }
 
-static int tencentos_sem_wait(mqtt_sem_t sem, uint32_t timeout_ms) {
-    k_tick_t timeout = (timeout_ms == 0xFFFFFFFF) ? TOS_TIME_FOREVER : tos_millisec2tick(timeout_ms);
-    return tos_sem_pend((k_sem_t*)sem, timeout) == K_ERR_NONE ? 0 : -1;
+static int tencentos_sem_wait(mqtt_sem_t sem) {
+    return tos_sem_pend((k_sem_t*)sem, TOS_TIME_FOREVER) == K_ERR_NONE ? 0 : -1;
 }
 
 static void tencentos_sem_post(mqtt_sem_t sem) {

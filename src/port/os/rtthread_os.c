@@ -41,9 +41,8 @@ static void rtthread_sem_destroy(mqtt_sem_t sem) {
     rt_sem_delete((rt_sem_t)sem);
 }
 
-static int rtthread_sem_wait(mqtt_sem_t sem, uint32_t timeout_ms) {
-    rt_int32_t ticks = (timeout_ms == 0xFFFFFFFF) ? RT_WAITING_FOREVER : rt_tick_from_millisecond(timeout_ms);
-    return rt_sem_take((rt_sem_t)sem, ticks) == RT_EOK ? 0 : -1;
+static int rtthread_sem_wait(mqtt_sem_t sem) {
+    return rt_sem_take((rt_sem_t)sem, RT_WAITING_FOREVER) == RT_EOK ? 0 : -1;
 }
 
 static void rtthread_sem_post(mqtt_sem_t sem) {

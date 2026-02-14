@@ -42,9 +42,8 @@ static void cmsis_sem_destroy(mqtt_sem_t sem) {
     osSemaphoreDelete((osSemaphoreId_t)sem);
 }
 
-static int cmsis_sem_wait(mqtt_sem_t sem, uint32_t timeout_ms) {
-    uint32_t timeout = (timeout_ms == 0xFFFFFFFF) ? osWaitForever : timeout_ms;
-    return osSemaphoreAcquire((osSemaphoreId_t)sem, timeout) == osOK ? 0 : -1;
+static int cmsis_sem_wait(mqtt_sem_t sem) {
+    return osSemaphoreAcquire((osSemaphoreId_t)sem, osWaitForever) == osOK ? 0 : -1;
 }
 
 static void cmsis_sem_post(mqtt_sem_t sem) {

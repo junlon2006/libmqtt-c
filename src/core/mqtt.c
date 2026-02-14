@@ -240,7 +240,7 @@ void mqtt_client_disconnect(mqtt_client_t* client) {
     
     /* Wait for thread to signal completion */
     if (client->recv_thread) {
-        os->sem_wait(client->thread_exit_sem, 0xFFFFFFFF);
+        os->sem_wait(client->thread_exit_sem);
         os->thread_destroy(client->recv_thread);
         client->recv_thread = NULL;
     }

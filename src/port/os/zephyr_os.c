@@ -45,9 +45,8 @@ static void zephyr_sem_destroy(mqtt_sem_t sem) {
     k_free(sem);
 }
 
-static int zephyr_sem_wait(mqtt_sem_t sem, uint32_t timeout_ms) {
-    k_timeout_t timeout = (timeout_ms == 0xFFFFFFFF) ? K_FOREVER : K_MSEC(timeout_ms);
-    return k_sem_take((struct k_sem*)sem, timeout) == 0 ? 0 : -1;
+static int zephyr_sem_wait(mqtt_sem_t sem) {
+    return k_sem_take((struct k_sem*)sem, K_FOREVER) == 0 ? 0 : -1;
 }
 
 static void zephyr_sem_post(mqtt_sem_t sem) {
