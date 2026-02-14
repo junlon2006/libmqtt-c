@@ -339,15 +339,20 @@ static int mqtt_try_reconnect(mqtt_client_t* client) {
         return -1;
     }
     
-    client->state = MQTT_STATE_CONNECTED;
-    client->last_ping_time = os->get_time_ms();
-    client->waiting_pingresp = 0;
-    
     for (int i = 0; i < client->sub_count; i++) {
         len = pack_subscribe(client->send_buf, client->subscriptions[i].topic,
                              client->subscriptions[i].qos, client->packet_id++);
-        net->send(client->socket, client->send_buf, len, 5000);
+        if (net->send(client->socket, client->send_buf, len, 5000) != len) {
+            net->disconnect(client->socket);
+            client->socket = NULL;
+            os->mutex_unlock(client->mutex);
+            return -1;
+        }
     }
+    
+    client->state = MQTT_STATE_CONNECTED;
+    client->last_ping_time = os->get_time_ms();
+    client->waiting_pingresp = 0;
     
     os->mutex_unlock(client->mutex);
     return 0;
