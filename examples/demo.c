@@ -30,7 +30,7 @@
 
 /* Application Configuration */
 #define MQTT_LOOP_INTERVAL_MS   1000
-#define MQTT_PUBLISH_INTERVAL 30
+#define MQTT_PUBLISH_INTERVAL 3
 
 void mqtt_posix_init(void);
 void mqtt_posix_net_init(void);
@@ -106,9 +106,9 @@ int main(void) {
     while (running) {
         if (++count % MQTT_PUBLISH_INTERVAL == 0 && mqtt_client_is_connected(client)) {
             char buf[128];
-            snprintf(buf, sizeof(buf), "Publish interval #%d from libmqtt client", count / MQTT_PUBLISH_INTERVAL);
+            snprintf(buf, sizeof(buf), "Publish #%d from libmqtt client", count / MQTT_PUBLISH_INTERVAL);
             if (mqtt_client_publish(client, MQTT_PUB_TOPIC, (uint8_t*)buf, strlen(buf), 0) == 0) {
-                printf("[SEND] Published heartbeat: %s\n", buf);
+                printf("[SEND] Published msg: %s\n", buf);
             }
         }
     
