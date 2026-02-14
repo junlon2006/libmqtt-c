@@ -66,17 +66,10 @@ int main(void) {
         .user_data = NULL
     };
     
-    printf("Creating MQTT client...\n");
+    printf("Creating and connecting MQTT client to %s:%d with TLS...\n", config.host, config.port);
     mqtt_client_t* client = mqtt_client_create(&config);
     if (!client) {
-        printf("Failed to create client\n");
-        return -1;
-    }
-    
-    printf("Connecting to %s:%d with TLS...\n", config.host, config.port);
-    if (mqtt_client_connect(client) != 0) {
-        printf("Failed to connect to broker\n");
-        mqtt_client_destroy(client);
+        printf("Failed to create and connect client\n");
         return -1;
     }
     
@@ -97,19 +90,17 @@ int main(void) {
     printf("\nRunning... (Press Ctrl+C to exit)\n");
     int count = 0;
     while (running) {
-        mqtt_client_loop(client);
         mqtt_os_get()->sleep_ms(1000);
         
         if (++count % 30 == 0 && mqtt_client_is_connected(client)) {
             char buf[128];
-            snprintf(buf, sizeof(buf), "TLS Heartbeat #%d", count / 30);
+            snprintf(buf, sizeof(buf), "TLS Publish message #%d", count / 30);
             mqtt_client_publish(client, "test/tls", (uint8_t*)buf, strlen(buf), 0);
             printf("[SEND] %s\n", buf);
         }
     }
     
-    printf("\nDisconnecting...\n");
-    mqtt_client_disconnect(client);
+    printf("\nDisconnecting and destroying client...\n");
     mqtt_client_destroy(client);
     
     printf("Done!\n");
