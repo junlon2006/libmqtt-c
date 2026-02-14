@@ -21,6 +21,12 @@
 
 static void mqtt_recv_thread(void* arg);
 
+/* Helper function to handle uint32_t timestamp wraparound */
+static inline int mqtt_time_elapsed(uint32_t start, uint32_t now, uint32_t threshold) {
+    uint32_t elapsed = now - start;  /* Handles wraparound correctly */
+    return elapsed >= threshold;
+}
+
 static int encode_remaining_length(uint8_t* buf, size_t len) {
     int count = 0;
     do {
@@ -342,7 +348,7 @@ static int mqtt_send_ping(mqtt_client_t* client) {
     uint32_t keepalive_ms = client->config.keepalive * 1000;
     
     if (client->waiting_pingresp) {
-        if (now - client->ping_sent_time >= keepalive_ms / 2) {
+        if (mqtt_time_elapsed(client->ping_sent_time, now, keepalive_ms / 2)) {
             os->mutex_lock(client->mutex);
             client->state = MQTT_STATE_DISCONNECTED;
             client->waiting_pingresp = 0;
@@ -354,7 +360,7 @@ static int mqtt_send_ping(mqtt_client_t* client) {
         return 0;
     }
     
-    if (now - client->last_ping_time < keepalive_ms / 2) {
+    if (!mqtt_time_elapsed(client->last_ping_time, now, keepalive_ms / 2)) {
         return 0;
     }
     
