@@ -77,6 +77,8 @@ static int lwip_net_recv(mqtt_socket_t sock, uint8_t* buf, size_t len, uint32_t 
     
     if (ret <= 0) return ret;
     
+    if (!FD_ISSET(fd, &readfds)) return 0;
+    
     do {
         ret = recv(fd, buf, len, 0);
     } while (ret < 0 && errno == EINTR);
