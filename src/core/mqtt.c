@@ -15,43 +15,18 @@
 #define MQTT_PINGRESP    13
 #define MQTT_DISCONNECT  14
 
-#define MQTT_PROTOCOL_LEVEL         4
-#define MQTT_PROTOCOL_NAME          "MQTT"
-#define MQTT_PROTOCOL_NAME_LEN      4
-#define MQTT_CONNECT_FIXED_HEADER   10
-#define MQTT_CLEAN_SESSION_FLAG     0x02
-#define MQTT_USERNAME_FLAG          0x80
-#define MQTT_PASSWORD_FLAG          0x40
-#define MQTT_SUBSCRIBE_FLAGS        0x02
-#define MQTT_QOS_MASK               0x03
-#define MQTT_QOS_SHIFT              1
-#define MQTT_PACKET_TYPE_SHIFT      4
-#define MQTT_REMAINING_LENGTH_MASK  0x80
-#define MQTT_REMAINING_LENGTH_MAX   4
-#define MQTT_BYTE_MASK              127
-#define MQTT_BYTE_MULTIPLIER        128
-#define MQTT_CONNACK_MIN_LEN        4
-#define MQTT_CONNACK_RC_OFFSET      3
-#define MQTT_TOPIC_BUFFER_SIZE      128
-#define MQTT_PACKET_ID_SIZE         2
-#define MQTT_TOPIC_LEN_SIZE         2
-#define MQTT_INITIAL_PACKET_ID      1
 #define MQTT_CONNECT_TIMEOUT_MS     5000
 #define MQTT_RECONNECT_DELAY_MS     1000
-#define MQTT_RECV_TIMEOUT_MS        2000
-#define MQTT_RECV_THREAD_STACK      2048
-#define MQTT_RECV_THREAD_PRIORITY   5
-#define MQTT_KEEPALIVE_DIVISOR      2
-#define MQTT_MS_PER_SECOND          1000
+#define MQTT_RECV_TIMEOUT_MS        1000
 
 static void mqtt_recv_thread(void* arg);
 
 static int encode_remaining_length(uint8_t* buf, size_t len) {
     int count = 0;
     do {
-        uint8_t byte = len % MQTT_BYTE_MULTIPLIER;
-        len /= MQTT_BYTE_MULTIPLIER;
-        if (len > 0) byte |= MQTT_REMAINING_LENGTH_MASK;
+        uint8_t byte = len % 128;
+        len /= 128;
+        if (len > 0) byte |= 0x80;
         buf[count++] = byte;
     } while (len > 0);
     return count;
@@ -62,11 +37,11 @@ static int decode_remaining_length(const uint8_t* buf, size_t* len) {
     *len = 0;
     uint8_t byte;
     do {
-        if (count >= MQTT_REMAINING_LENGTH_MAX) return -1;
+        if (count >= 4) return -1;
         byte = buf[count++];
-        *len += (byte & MQTT_BYTE_MASK) * multiplier;
-        multiplier *= MQTT_BYTE_MULTIPLIER;
-    } while ((byte & MQTT_REMAINING_LENGTH_MASK) != 0);
+        *len += (byte & 127) * multiplier;
+        multiplier *= 128;
+    } while ((byte & 128) != 0);
     return count;
 }
 
@@ -74,29 +49,29 @@ static int pack_connect(uint8_t* buf, const char* client_id, const char* usernam
                         const char* password, uint16_t keepalive, uint8_t clean_session) {
     int pos = 0;
     size_t cid_len = strlen(client_id);
-    size_t payload_len = MQTT_TOPIC_LEN_SIZE + cid_len;
-    uint8_t flags = clean_session ? MQTT_CLEAN_SESSION_FLAG : 0x00;
+    size_t payload_len = 2 + cid_len;
+    uint8_t flags = clean_session ? 0x02 : 0x00;
     
     if (username) {
-        payload_len += MQTT_TOPIC_LEN_SIZE + strlen(username);
-        flags |= MQTT_USERNAME_FLAG;
+        payload_len += 2 + strlen(username);
+        flags |= 0x80;
     }
     if (password) {
-        payload_len += MQTT_TOPIC_LEN_SIZE + strlen(password);
-        flags |= MQTT_PASSWORD_FLAG;
+        payload_len += 2 + strlen(password);
+        flags |= 0x40;
     }
     
-    size_t remaining = MQTT_CONNECT_FIXED_HEADER + payload_len;
-    uint8_t rem_buf[MQTT_REMAINING_LENGTH_MAX];
+    size_t remaining = 10 + payload_len;
+    uint8_t rem_buf[4];
     int rem_len = encode_remaining_length(rem_buf, remaining);
     
-    buf[pos++] = MQTT_CONNECT << MQTT_PACKET_TYPE_SHIFT;
+    buf[pos++] = MQTT_CONNECT << 4;
     memcpy(buf + pos, rem_buf, rem_len);
     pos += rem_len;
     
-    buf[pos++] = 0; buf[pos++] = MQTT_PROTOCOL_NAME_LEN;
-    memcpy(buf + pos, MQTT_PROTOCOL_NAME, MQTT_PROTOCOL_NAME_LEN); pos += MQTT_PROTOCOL_NAME_LEN;
-    buf[pos++] = MQTT_PROTOCOL_LEVEL;
+    buf[pos++] = 0; buf[pos++] = 4;
+    memcpy(buf + pos, "MQTT", 4); pos += 4;
+    buf[pos++] = 4;
     buf[pos++] = flags;
     buf[pos++] = keepalive >> 8;
     buf[pos++] = keepalive & 0xFF;
@@ -128,13 +103,13 @@ static int pack_publish(uint8_t* buf, const char* topic, const uint8_t* payload,
                         size_t payload_len, uint8_t qos, uint16_t packet_id) {
     int pos = 0;
     size_t topic_len = strlen(topic);
-    size_t remaining = MQTT_TOPIC_LEN_SIZE + topic_len + payload_len;
-    if (qos > 0) remaining += MQTT_PACKET_ID_SIZE;
+    size_t remaining = 2 + topic_len + payload_len;
+    if (qos > 0) remaining += 2;
     
-    uint8_t rem_buf[MQTT_REMAINING_LENGTH_MAX];
+    uint8_t rem_buf[4];
     int rem_len = encode_remaining_length(rem_buf, remaining);
     
-    buf[pos++] = (MQTT_PUBLISH << MQTT_PACKET_TYPE_SHIFT) | (qos << MQTT_QOS_SHIFT);
+    buf[pos++] = (MQTT_PUBLISH << 4) | (qos << 1);
     memcpy(buf + pos, rem_buf, rem_len);
     pos += rem_len;
     
@@ -157,12 +132,12 @@ static int pack_publish(uint8_t* buf, const char* topic, const uint8_t* payload,
 static int pack_subscribe(uint8_t* buf, const char* topic, uint8_t qos, uint16_t packet_id) {
     int pos = 0;
     size_t topic_len = strlen(topic);
-    size_t remaining = MQTT_PACKET_ID_SIZE + MQTT_TOPIC_LEN_SIZE + topic_len + 1;
+    size_t remaining = 2 + 2 + topic_len + 1;
     
-    uint8_t rem_buf[MQTT_REMAINING_LENGTH_MAX];
+    uint8_t rem_buf[4];
     int rem_len = encode_remaining_length(rem_buf, remaining);
     
-    buf[pos++] = (MQTT_SUBSCRIBE << MQTT_PACKET_TYPE_SHIFT) | MQTT_SUBSCRIBE_FLAGS;
+    buf[pos++] = (MQTT_SUBSCRIBE << 4) | 0x02;
     memcpy(buf + pos, rem_buf, rem_len);
     pos += rem_len;
     
@@ -178,13 +153,13 @@ static int pack_subscribe(uint8_t* buf, const char* topic, uint8_t qos, uint16_t
 }
 
 static int pack_pingreq(uint8_t* buf) {
-    buf[0] = MQTT_PINGREQ << MQTT_PACKET_TYPE_SHIFT;
+    buf[0] = MQTT_PINGREQ << 4;
     buf[1] = 0;
     return 2;
 }
 
 static int pack_disconnect(uint8_t* buf) {
-    buf[0] = MQTT_DISCONNECT << MQTT_PACKET_TYPE_SHIFT;
+    buf[0] = MQTT_DISCONNECT << 4;
     buf[1] = 0;
     return 2;
 }
@@ -200,7 +175,7 @@ mqtt_client_t* mqtt_client_create(const mqtt_config_t* config) {
     memset(client, 0, sizeof(mqtt_client_t));
     memcpy(&client->config, config, sizeof(mqtt_config_t));
     client->state = MQTT_STATE_DISCONNECTED;
-    client->packet_id = MQTT_INITIAL_PACKET_ID;
+    client->packet_id = 1;
     client->sub_count = 0;
     
     client->mutex = os->mutex_create();
@@ -217,8 +192,8 @@ mqtt_client_t* mqtt_client_create(const mqtt_config_t* config) {
     
     if (net->send(client->socket, client->send_buf, len) != len) goto err_disconnect;
     
-    int recv_len = net->recv(client->socket, client->recv_buf, MQTT_RECV_BUF_SIZE, MQTT_RECV_TIMEOUT_MS);
-    if (recv_len < MQTT_CONNACK_MIN_LEN || (client->recv_buf[0] >> MQTT_PACKET_TYPE_SHIFT) != MQTT_CONNACK || client->recv_buf[MQTT_CONNACK_RC_OFFSET] != 0) {
+    int recv_len = net->recv(client->socket, client->recv_buf, MQTT_RECV_BUF_SIZE, MQTT_CONNECT_TIMEOUT_MS);
+    if (recv_len < 4 || (client->recv_buf[0] >> 4) != MQTT_CONNACK || client->recv_buf[3] != 0) {
         goto err_disconnect;
     }
     
@@ -226,7 +201,7 @@ mqtt_client_t* mqtt_client_create(const mqtt_config_t* config) {
     client->last_ping_time = os->get_time_ms();
     client->running = 1;
     
-    client->recv_thread = os->thread_create(mqtt_recv_thread, client, MQTT_RECV_THREAD_STACK, MQTT_RECV_THREAD_PRIORITY);
+    client->recv_thread = os->thread_create(mqtt_recv_thread, client, 2048, 5);
     if (!client->recv_thread) goto err_disconnect;
     
     return client;
@@ -334,8 +309,8 @@ static int mqtt_try_reconnect(mqtt_client_t* client) {
     
     if (net->send(client->socket, client->send_buf, len) != len) goto err_cleanup;
     
-    int recv_len = net->recv(client->socket, client->recv_buf, MQTT_RECV_BUF_SIZE, MQTT_RECV_TIMEOUT_MS);
-    if (recv_len < MQTT_CONNACK_MIN_LEN || (client->recv_buf[0] >> MQTT_PACKET_TYPE_SHIFT) != MQTT_CONNACK || client->recv_buf[MQTT_CONNACK_RC_OFFSET] != 0) {
+    int recv_len = net->recv(client->socket, client->recv_buf, MQTT_RECV_BUF_SIZE, MQTT_CONNECT_TIMEOUT_MS);
+    if (recv_len < 4 || (client->recv_buf[0] >> 4) != MQTT_CONNACK || client->recv_buf[3] != 0) {
         goto err_cleanup;
     }
     
@@ -364,10 +339,10 @@ static int mqtt_send_ping(mqtt_client_t* client) {
     const mqtt_os_api_t* os = mqtt_os_get();
     
     uint32_t now = os->get_time_ms();
-    uint32_t keepalive_ms = client->config.keepalive * MQTT_MS_PER_SECOND;
+    uint32_t keepalive_ms = client->config.keepalive * 1000;
     
     if (client->waiting_pingresp) {
-        if (now - client->ping_sent_time >= keepalive_ms / MQTT_KEEPALIVE_DIVISOR) {
+        if (now - client->ping_sent_time >= keepalive_ms / 2) {
             os->mutex_lock(client->mutex);
             client->state = MQTT_STATE_DISCONNECTED;
             client->waiting_pingresp = 0;
@@ -379,7 +354,7 @@ static int mqtt_send_ping(mqtt_client_t* client) {
         return 0;
     }
     
-    if (now - client->last_ping_time < keepalive_ms / MQTT_KEEPALIVE_DIVISOR) {
+    if (now - client->last_ping_time < keepalive_ms / 2) {
         return 0;
     }
     
@@ -407,17 +382,17 @@ static void mqtt_handle_publish(mqtt_client_t* client, int len) {
     int offset = 1 + decode_remaining_length(client->recv_buf + 1, &remaining);
     
     uint16_t topic_len = (client->recv_buf[offset] << 8) | client->recv_buf[offset + 1];
-    offset += MQTT_TOPIC_LEN_SIZE;
+    offset += 2;
     
-    char topic[MQTT_TOPIC_BUFFER_SIZE];
+    char topic[128];
     if (topic_len >= sizeof(topic)) return;
     
     memcpy(topic, client->recv_buf + offset, topic_len);
     topic[topic_len] = '\0';
     offset += topic_len;
     
-    uint8_t qos = (client->recv_buf[0] >> MQTT_QOS_SHIFT) & MQTT_QOS_MASK;
-    if (qos > 0) offset += MQTT_PACKET_ID_SIZE;
+    uint8_t qos = (client->recv_buf[0] >> 1) & 0x03;
+    if (qos > 0) offset += 2;
     
     size_t payload_len = len - offset;
     client->config.msg_cb(topic, client->recv_buf + offset, payload_len, client->config.user_data);
@@ -454,7 +429,7 @@ static void mqtt_recv_thread(void* arg) {
         }
         if (len == 0) continue;
         
-        uint8_t type = client->recv_buf[0] >> MQTT_PACKET_TYPE_SHIFT;
+        uint8_t type = client->recv_buf[0] >> 4;
         
         if (type == MQTT_PINGRESP) {
             client->last_ping_time = os->get_time_ms();
