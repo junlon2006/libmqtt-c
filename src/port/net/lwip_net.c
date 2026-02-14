@@ -11,7 +11,7 @@
 #include "lwip/netdb.h"
 #include <string.h>
 
-static mqtt_socket_t lwip_connect(const char* host, uint16_t port, uint32_t timeout_ms) {
+static mqtt_socket_t lwip_net_connect(const char* host, uint16_t port, uint32_t timeout_ms) {
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) return NULL;
     
@@ -46,11 +46,11 @@ static mqtt_socket_t lwip_connect(const char* host, uint16_t port, uint32_t time
     return (mqtt_socket_t)(intptr_t)sock;
 }
 
-static void lwip_disconnect(mqtt_socket_t sock) {
+static void lwip_net_disconnect(mqtt_socket_t sock) {
     close((int)(intptr_t)sock);
 }
 
-static int lwip_send(mqtt_socket_t sock, const uint8_t* buf, size_t len) {
+static int lwip_net_send(mqtt_socket_t sock, const uint8_t* buf, size_t len) {
     int fd = (int)(intptr_t)sock;
     ssize_t ret;
     do {
@@ -59,7 +59,7 @@ static int lwip_send(mqtt_socket_t sock, const uint8_t* buf, size_t len) {
     return ret;
 }
 
-static int lwip_recv(mqtt_socket_t sock, uint8_t* buf, size_t len, uint32_t timeout_ms) {
+static int lwip_net_recv(mqtt_socket_t sock, uint8_t* buf, size_t len, uint32_t timeout_ms) {
     int fd = (int)(intptr_t)sock;
     fd_set readfds;
     struct timeval tv;
@@ -85,10 +85,10 @@ static int lwip_recv(mqtt_socket_t sock, uint8_t* buf, size_t len, uint32_t time
 }
 
 static const mqtt_net_api_t lwip_net_api = {
-    .connect = lwip_connect,
-    .disconnect = lwip_disconnect,
-    .send = lwip_send,
-    .recv = lwip_recv
+    .connect = lwip_net_connect,
+    .disconnect = lwip_net_disconnect,
+    .send = lwip_net_send,
+    .recv = lwip_net_recv
 };
 
 void mqtt_lwip_init(void) {
